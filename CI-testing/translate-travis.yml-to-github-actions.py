@@ -126,18 +126,18 @@ def generate_linux_yaml(output_path, is_act):
 
 
 def _apply_cpack_fix(steps):
-    # See:
-    #
-    # https://github.com/sithlord48/blackchocobo/actions/runs/1207252836/workflow#L100
-    # https://github.community/t/windows-actions-suddenly-fail-needing-a-nuspec-file/199483
-    cpack_fix = {
-        "if": "runner.os == 'Windows'",
-        "name": "Remove Chocolatey's CPack",
-        "run": "Remove-Item -Path " +
-        "C:\\ProgramData\\Chocolatey\\bin\\cpack.exe -Force",
-    }
     cpack_fix_needed = False
     if cpack_fix_needed:
+        # See:
+        #
+        # https://github.com/sithlord48/blackchocobo/actions/runs/1207252836/workflow#L100
+        # https://github.community/t/windows-actions-suddenly-fail-needing-a-nuspec-file/199483
+        cpack_fix = {
+            "if": "runner.os == 'Windows'",
+            "name": "Remove Chocolatey's CPack",
+            "run": "Remove-Item -Path " +
+            "C:\\ProgramData\\Chocolatey\\bin\\cpack.exe -Force",
+        }
         steps.append(cpack_fix)
 
 
@@ -174,7 +174,7 @@ def generate_windows_yaml(plat, output_path, is_act):
         batch += "@echo on\n"
         for k, v in sorted(data['environment'].items()):
             # batch += "SET " + k + "=\"" + v + "\"\n"
-            batch += "SET " + k + "=" + v + "\n"
+            batch += f"SET {k}={v}" + "\n"
         if x86:
             start = 'mkdir pkg-build-win64'
             end = "^cpack -G WIX"
@@ -237,6 +237,7 @@ def generate_windows_yaml(plat, output_path, is_act):
     def _myfilt(path):
         is32 = ("\\pkg-build\\" in path)
         return (is32 if x86 else (not is32))
+
     steps += [{
         'name': "upload build artifacts - " + art['name'],
         'uses': "actions/upload-artifact@v2",
@@ -256,17 +257,6 @@ def main():
         output_path=".act-github/workflows/use-github-actions.yml",
         is_act=True,
     )
-    if False:
-        generate_windows_yaml(
-            plat='x86',
-            output_path=".github/workflows/windows-x86.yml",
-            is_act=False,
-        )
-        generate_windows_yaml(
-            plat='x64',
-            output_path=".github/workflows/windows-x64.yml",
-            is_act=False,
-        )
 
 
 if __name__ == "__main__":
